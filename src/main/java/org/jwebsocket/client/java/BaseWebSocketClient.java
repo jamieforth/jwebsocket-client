@@ -112,7 +112,7 @@ public class BaseWebSocketClient implements WebSocketClient {
     private int mVersion = JWebSocketCommonConstants.WS_VERSION_DEFAULT;
     private WebSocketEncoding mEncoding = WebSocketEncoding.TEXT;
     private ReliabilityOptions mReliabilityOptions = null;
-    private final ScheduledThreadPoolExecutor mExecutor = new ScheduledThreadPoolExecutor(1);
+    private ScheduledThreadPoolExecutor mExecutor = null;
     private final Map<String, Object> mParams = new FastMap<String, Object>();
     private final Object mWriteLock = new Object();
     private String mCloseReason = null;
@@ -449,6 +449,11 @@ public class BaseWebSocketClient implements WebSocketClient {
         // on an explicit close operation ...
         // cancel all potential re-connection tasks.
         mAbortReconnect();
+        if(mExecutor != null) {
+            mExecutor.shutdown();
+            mExecutor = null;
+        }
+
         if (null != mReceiver) {
             mReceiver.quit();
         }
@@ -723,25 +728,23 @@ public class BaseWebSocketClient implements WebSocketClient {
             mIsReconnecting = false;
             mReconnectorTask = null;
             // clean up all potentially old references to inactive tasks
-            mExecutor.purge();
+            if(mExecutor != null)
+                mExecutor.purge();
         }
     }
 
     private void mCheckReconnect(WebSocketClientEvent aEvent) {
         synchronized (mReconnectLock) {
-            // first, purge all potentially old references to other tasks
-            mExecutor.purge();
             // did we configure reliability options?
             // and is there now re-connection task already active?
-            if (mReliabilityOptions != null
-                    && mReliabilityOptions.getReconnectDelay() > 0
-                    && !mIsReconnecting) {
+            if (mExecutor != null && mReliabilityOptions != null
+                    && mReliabilityOptions.getReconnectDelay() > 0 && !mIsReconnecting) {
+                // first, purge all potentially old references to other tasks
+                mExecutor.purge();
                 // schedule a re-connect action after the re-connect delay
                 mIsReconnecting = true;
-                mReconnectorTask = mExecutor.schedule(
-                        new ReOpener(aEvent),
-                        mReliabilityOptions.getReconnectDelay(),
-                        TimeUnit.MILLISECONDS);
+                mReconnectorTask = mExecutor.schedule(new ReOpener(aEvent),
+                        mReliabilityOptions.getReconnectDelay(), TimeUnit.MILLISECONDS);
             }
         }
     }
