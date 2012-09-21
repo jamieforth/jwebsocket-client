@@ -141,7 +141,7 @@ public class BaseWebSocketClient implements WebSocketClient {
      * Constructor including reliability options
      */
     public BaseWebSocketClient(ReliabilityOptions aReliabilityOptions) {
-        mReliabilityOptions = aReliabilityOptions;
+        setReliabilityOptions(aReliabilityOptions);
     }
 
     /**
@@ -227,9 +227,15 @@ public class BaseWebSocketClient implements WebSocketClient {
      */
     public void open(int aVersion, String aURI, String aSubProtocols) {
         try {
+            if (mReliabilityOptions != null && mExecutor == null) {
+                // Create new executor for reliability options.
+                mExecutor = new ScheduledThreadPoolExecutor(1);
+                mExecutor.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+            }
+
             mAbortReconnect();
 
-            // set default close reason in case 
+            // set default close reason in case
             // connection could not be established.
             mCloseReason = "Connection could not be established.";
 
@@ -250,7 +256,7 @@ public class BaseWebSocketClient implements WebSocketClient {
 
             // pass session cookie, if already was set for this client instance
             byte[] lBA;
-            List<HttpCookie> lTempCookies = new ArrayList();
+            List<HttpCookie> lTempCookies = new ArrayList<HttpCookie>();
             if (null != mCookies) {
                 HttpCookie lCookie;
                 for (int lIndex = 0; lIndex < mCookies.size(); lIndex++) {
@@ -511,7 +517,7 @@ public class BaseWebSocketClient implements WebSocketClient {
             try {
                 try {
                     // TODO: Make acceptance of unsigned certificates optional!
-                    // This methodology is used to accept unsigned certficates
+                    // This methodology is used to accept unsigned certificates
                     // on the SSL server. Be careful with this in production environments!
 
                     // Create a trust manager to accept unsigned certificates
