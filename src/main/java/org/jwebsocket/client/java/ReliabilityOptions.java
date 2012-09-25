@@ -15,8 +15,9 @@
 package org.jwebsocket.client.java;
 
 /**
- *
+ * 
  * @author aschulze
+ * @author jforth
  */
 public class ReliabilityOptions {
 
@@ -26,13 +27,35 @@ public class ReliabilityOptions {
     private int mQueueItemLimit = -1;
     private int mQueueSizeLimit = -1;
 
-    public ReliabilityOptions(boolean aAutoReconnect, long aReconnectDelay,
-            long aReconnectTimeout, int aQueueItemLimit, int aQueueSizeLimit) {
+    // The following are only relevant to token or custom servers.
+
+    /**
+     * Automatically set the client connection socket timeout the same as the
+     * server's socket timeout when receiving the WELCOME token.
+     */
+    private boolean mSetSocketTimeoutFromServer = false;
+
+    /**
+     * Automatically start a heartbeat when receiving the WELCOME token. This
+     * could be integrated into the baseWebSocketClient implementation, but then
+     * it wouldn't be possible to have the option of automatically setting the
+     * heartbeat interval relative to the server socket timeout.
+     */
+    private boolean mHeartbeat = false;
+    private int mHeartbeatInterval = -1; // Defaults to 0.75*SoTimeout or 1
+                                         // minute.
+
+    public ReliabilityOptions(boolean aAutoReconnect, long aReconnectDelay, long aReconnectTimeout,
+            int aQueueItemLimit, int aQueueSizeLimit, boolean aSetSocketTimeoutFromServer,
+            boolean aHeartbeat, int aHeartbeatInterval) {
         mAutoReconnect = aAutoReconnect;
         mReconnectDelay = aReconnectDelay;
         mReconnectTimeout = aReconnectTimeout;
         mQueueItemLimit = aQueueItemLimit;
         mQueueSizeLimit = aQueueSizeLimit;
+        mSetSocketTimeoutFromServer = aSetSocketTimeoutFromServer;
+        mHeartbeat = aHeartbeat;
+        mHeartbeatInterval = aHeartbeatInterval;
     }
 
     /**
@@ -43,7 +66,8 @@ public class ReliabilityOptions {
     }
 
     /**
-     * @param aAutoReconnect the AutoReconnect to set
+     * @param aAutoReconnect
+     *            the AutoReconnect to set
      */
     public void setAutoReconnect(boolean aAutoReconnect) {
         this.mAutoReconnect = aAutoReconnect;
@@ -57,7 +81,8 @@ public class ReliabilityOptions {
     }
 
     /**
-     * @param aReconnectDelay the ReconnectDelay to set
+     * @param aReconnectDelay
+     *            the ReconnectDelay to set
      */
     public void setReconnectDelay(long aReconnectDelay) {
         this.mReconnectDelay = aReconnectDelay;
@@ -71,7 +96,8 @@ public class ReliabilityOptions {
     }
 
     /**
-     * @param aReconnectTimeout the ReconnectTimeout to set
+     * @param aReconnectTimeout
+     *            the ReconnectTimeout to set
      */
     public void setReconnectTimeout(int aReconnectTimeout) {
         this.mReconnectTimeout = aReconnectTimeout;
@@ -85,7 +111,8 @@ public class ReliabilityOptions {
     }
 
     /**
-     * @param aQueueItemLimit the QueueItemLimit to set
+     * @param aQueueItemLimit
+     *            the QueueItemLimit to set
      */
     public void setQueueItemLimit(int aQueueItemLimit) {
         this.mQueueItemLimit = aQueueItemLimit;
@@ -99,9 +126,55 @@ public class ReliabilityOptions {
     }
 
     /**
-     * @param aQueueSizeLimit the QueueSizeLimit to set
+     * @param aQueueSizeLimit
+     *            the QueueSizeLimit to set
      */
     public void setQueueSizeLimit(int aQueueSizeLimit) {
         this.mQueueSizeLimit = aQueueSizeLimit;
     }
+
+    /**
+     * @return the set socket timeout from server
+     */
+    public boolean isSetSocketTimeoutFromServer() {
+        return this.mSetSocketTimeoutFromServer;
+    }
+
+    /**
+     * @param aSetSocketTimeoutFromServer
+     */
+    public void setSocketTimeoutFromServer(boolean aSetSocketTimeoutFromServer) {
+        this.mSetSocketTimeoutFromServer = aSetSocketTimeoutFromServer;
+    }
+
+    /**
+     * @return the heartbeat
+     */
+    public boolean isHeartbeat() {
+        return this.mHeartbeat;
+    }
+
+    /**
+     * @param aHeartbeat
+     *            set the heartbeat
+     */
+    public void setHeartbeat(boolean aHeartbeat) {
+        this.mHeartbeat = aHeartbeat;
+    }
+
+    /**
+     * @return the heartbeat interval
+     */
+    public int getHeartbeatInterval() {
+        return this.mHeartbeatInterval;
+    }
+
+    /**
+     * @param aHeartbeatInterval
+     *            set the heartbeat interval
+     */
+    public void setHeartbeatInterval(int aHeartbeatInterval) {
+        this.mHeartbeatInterval = aHeartbeatInterval;
+    }
+
 }

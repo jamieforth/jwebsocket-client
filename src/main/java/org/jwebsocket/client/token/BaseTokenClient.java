@@ -41,6 +41,7 @@ import org.jwebsocket.util.Tools;
  * @author aschulze
  * @author puran
  * @author jang
+ * @author jforth
  * @version $Id:$
  */
 public class BaseTokenClient extends BaseWebSocketClient implements WebSocketTokenClient {
@@ -158,6 +159,10 @@ public class BaseTokenClient extends BaseWebSocketClient implements WebSocketTok
                         mUsername = lUsername;
                         mStatus = WebSocketStatus.AUTHENTICATED;
                     }
+                    if(getReliabilityOptions().isSetSocketTimeoutFromServer())
+                        setConnectionSocketTimeout(lToken.getInteger("timeout"));
+                    if(getReliabilityOptions().isHeartbeat())
+                        startHeartbeat();
                 } else if (GOODBYE.equals(lType)) {
                     mUsername = null;
                 }

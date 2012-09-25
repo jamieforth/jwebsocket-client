@@ -17,6 +17,7 @@ package org.jwebsocket.client.java;
 import java.io.*;
 import java.net.HttpCookie;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.security.KeyManagementException;
@@ -53,10 +54,14 @@ import org.jwebsocket.util.Tools;
  * @author jang
  * @author aschulze
  * @author kyberneees
+ * @author jforth
  */
 public class BaseWebSocketClient implements WebSocketClient {
 
     private static final int RECEIVER_SHUTDOWN_TIMEOUT = 3000;
+    private static final int DEFAULT_HEARTBEAT_INTERVAL = 60000;
+    private ScheduledFuture mHeartbeatTask = null;
+
     /**
      * WebSocket connection URI
      */
@@ -600,6 +605,26 @@ public class BaseWebSocketClient implements WebSocketClient {
         return mSocket;
     }
 
+    public void setConnectionSocketTimeout(int timeout) {
+        try {
+            mSocket.setSoTimeout(timeout);
+        } catch (SocketException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
+
+    public int getConnectionSocketTimeout() {
+        int timeout = -1;
+        try {
+            timeout = mSocket.getSoTimeout();
+        } catch (SocketException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return timeout;
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -749,6 +774,59 @@ public class BaseWebSocketClient implements WebSocketClient {
         }
     }
 
+    class Heartbeat implements Runnable {
+
+        private WebSocketClientEvent mEvent;
+
+        public Heartbeat() {
+        }
+
+        public Heartbeat(WebSocketClientEvent aEvent) {
+            mEvent = aEvent;
+        }
+
+        @Override
+        public void run() {
+            WebSocketPacket lPing = new RawPacket(WebSocketFrameType.PING, "");
+            try {
+                send(lPing);
+            } catch (WebSocketException lEx) {
+                setCloseReason(lEx.getClass().getName() + " failed to send heartbeat: "
+                        + lEx.getMessage());
+            }
+        }
+    }
+
+    public void startHeartbeat() {
+        int heartbeatInterval = -1;
+
+        stopHeartbeat();
+
+        if (mExecutor != null && mReliabilityOptions != null) {
+            /* try reliability options */
+            heartbeatInterval = mReliabilityOptions.getHeartbeatInterval();
+            if (heartbeatInterval <= 0) {
+                /* try socket timeout */
+                heartbeatInterval = getConnectionSocketTimeout();
+                if (heartbeatInterval > 0) {
+                    heartbeatInterval = heartbeatInterval / 4 * 3;
+                } else {
+                    /* default */
+                    heartbeatInterval = DEFAULT_HEARTBEAT_INTERVAL;
+                }
+            }
+            mHeartbeatTask = mExecutor.scheduleAtFixedRate(new Heartbeat(), heartbeatInterval,
+            heartbeatInterval, TimeUnit.MILLISECONDS);
+        }
+    }
+
+    public void stopHeartbeat() {
+        if (mHeartbeatTask != null) {
+            mHeartbeatTask.cancel(true);
+            mHeartbeatTask = null;
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -809,6 +887,8 @@ public class BaseWebSocketClient implements WebSocketClient {
             } else {
                 processHybi();
             }
+
+            stopHeartbeat();
 
             // set status AFTER close frame was sent, otherwise sending
             // close frame leads to an exception.
