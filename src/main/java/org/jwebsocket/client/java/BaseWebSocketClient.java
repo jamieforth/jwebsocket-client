@@ -296,10 +296,10 @@ public class BaseWebSocketClient implements WebSocketClient {
                     for (HttpCookie lCookie : lCookies) {
                         for (int lIndex = 0; lIndex < mCookies.size(); lIndex++) {
                             if (null == mCookies.get(lIndex).getDomain()
-                                    || HttpCookie.domainMatches(mCookies.get(lIndex).getDomain(), mURI.getHost())
-                                    && (null == lCookie.getPath()
-                                    || (null != mURI.getPath()
-                                    && mURI.getPath().startsWith(lCookie.getPath())))) {
+                                    || HttpCookie.domainMatches(mCookies.get(lIndex).getDomain(),
+                                            mURI.getHost())
+                                    && (null == lCookie.getPath() || (null != mURI.getPath() && mURI
+                                            .getPath().startsWith(lCookie.getPath())))) {
                                 mCookies.set(lIndex, lCookie);
                             }
                         }
