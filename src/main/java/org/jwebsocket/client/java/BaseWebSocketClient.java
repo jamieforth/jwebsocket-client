@@ -687,6 +687,12 @@ public class BaseWebSocketClient implements WebSocketClient {
         return mReliabilityOptions;
     }
 
+    public boolean hasReliabilityOptions() {
+        if (mReliabilityOptions != null)
+            return true;
+        return false;
+    }
+
     /**
      * @param mReliabilityOptions the mReliabilityOptions to set
      */
