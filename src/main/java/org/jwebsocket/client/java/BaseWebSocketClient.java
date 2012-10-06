@@ -770,6 +770,7 @@ public class BaseWebSocketClient implements WebSocketClient {
             // did we configure reliability options?
             // and is there now re-connection task already active?
             if (mExecutor != null && mReliabilityOptions != null
+                    && mReliabilityOptions.isAutoReconnect()
                     && mReliabilityOptions.getReconnectDelay() > 0 && !mIsReconnecting) {
                 // first, purge all potentially old references to other tasks
                 mExecutor.purge();
