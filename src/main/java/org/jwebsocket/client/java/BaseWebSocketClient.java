@@ -288,8 +288,18 @@ public class BaseWebSocketClient implements WebSocketClient {
             // registering new cookies from the server response
             String lSetCookie = mHeaders.getField("Set-Cookie");
             if (null != lSetCookie) {
-                // FIXME: This will fail in Java 1.6, only implements rfc2965.
-                List<HttpCookie> lCookies = HttpCookie.parse(lSetCookie);
+                List<HttpCookie> lCookies;
+                String version = System.getProperty("java.version");
+                if (Character.getNumericValue(version.charAt(0)) <= 1
+                        && Character.getNumericValue(version.charAt(2)) <= 6) {
+                    // Java 1.6, only implements rfc2965 (no HttpOnly).
+                    lSetCookie = lSetCookie.replace("; HttpOnly", "");
+                    lCookies = HttpCookie.parse(lSetCookie);
+                } else {
+                    // Java 1.7 implements rfc6265.
+                    lCookies = HttpCookie.parse(lSetCookie);
+                }
+
                 if (mCookies.isEmpty()) {
                     mCookies.addAll(lCookies);
                 } else {
