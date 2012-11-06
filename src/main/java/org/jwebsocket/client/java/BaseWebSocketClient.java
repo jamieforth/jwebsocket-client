@@ -290,13 +290,13 @@ public class BaseWebSocketClient implements WebSocketClient {
             if (null != lSetCookie) {
                 List<HttpCookie> lCookies;
                 String version = System.getProperty("java.version");
-                if (Character.getNumericValue(version.charAt(0)) <= 1
-                        && Character.getNumericValue(version.charAt(2)) <= 6) {
-                    // Java 1.6, only implements rfc2965 (no HttpOnly).
-                    lSetCookie = lSetCookie.replace("; HttpOnly", "");
+                if (Character.getNumericValue(version.charAt(0)) == 0 // Android "java.version".
+                        || Character.getNumericValue(version.charAt(2)) >= 7) {
+                    // Java 1.7 implements rfc6265 (well at least understands HttpOnly).
                     lCookies = HttpCookie.parse(lSetCookie);
                 } else {
-                    // Java 1.7 implements rfc6265.
+                    // Java 1.6, only implements rfc2965 (no HttpOnly).
+                    lSetCookie = lSetCookie.replace("; HttpOnly", "");
                     lCookies = HttpCookie.parse(lSetCookie);
                 }
 
