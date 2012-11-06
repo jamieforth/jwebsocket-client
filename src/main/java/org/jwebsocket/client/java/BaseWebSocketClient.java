@@ -617,6 +617,7 @@ public class BaseWebSocketClient implements WebSocketClient {
     }
 
     public void setConnectionSocketTimeout(int timeout) {
+        // FIXME: Throw exception.
         try {
             mSocket.setSoTimeout(timeout);
         } catch (SocketException e) {
@@ -626,7 +627,8 @@ public class BaseWebSocketClient implements WebSocketClient {
     }
 
     public int getConnectionSocketTimeout() {
-        int timeout = -1;
+        // FIXME: Throw exception.
+        int timeout = 0;
         try {
             timeout = mSocket.getSoTimeout();
         } catch (SocketException e) {
